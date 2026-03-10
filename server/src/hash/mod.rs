@@ -1,31 +1,31 @@
 use argon2::{
-    password_hash::{SaltString, PasswordHasher, PasswordHash, PasswordVerifier},
-    Argon2
+    Argon2,
+    password_hash::{
+        rand_core::OsRng,
+        PasswordHasher, PasswordVerifier, SaltString
+    }
 };
-use rand::rngs::OsRng;
 
 pub fn hash_password(password: &str) -> String {
-
-    // random salt yaratish
+    // Generate a secure random salt
     let salt = SaltString::generate(&mut OsRng);
 
-    // Argon2 instance
+    // Hash the password using the default Argon2 configuration
     let argon2 = Argon2::default();
 
-    // password hash qilish
-    let password_hash = argon2
-        .hash_password(password.as_bytes(), &salt)
-        .unwrap()
-        .to_string();
+    let hashed_password = argon2.hash_password(password.as_bytes(), &salt)
+        .expect("Failed to hash password")
+        .to_string(); // The result is a PHC string, ready to store in a database
 
-    password_hash
+    hashed_password
 }
 
-pub fn verify_password(hash: &str, password: &str) -> bool {
+pub fn verify_password(password: &str, hashed_password: &str) -> bool {
+    // Parse the stored hash from the PHC string format
+    let parsed_hash = argon2::password_hash::PasswordHash::new(hashed_password)
+        .expect("Invalid stored hash");
 
-    let parsed_hash = PasswordHash::new(hash).unwrap();
-
-    Argon2::default()
-        .verify_password(password.as_bytes(), &parsed_hash)
+    // Verify the new password against the stored hash
+    Argon2::default().verify_password(password.as_bytes(), &parsed_hash)
         .is_ok()
 }

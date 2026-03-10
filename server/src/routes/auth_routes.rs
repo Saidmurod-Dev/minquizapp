@@ -6,9 +6,10 @@ use sea_orm::DatabaseConnection;
 use crate::handlers::{
     user_handler::register_user
 };
+use crate::handlers::user_handler::login_user;
 
 pub fn get_auth_routes() -> Router<DatabaseConnection> {
     Router::new()
         .route("/register", post(register_user))
-    
+        .route("/login", post(login_user))
 }

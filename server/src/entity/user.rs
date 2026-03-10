@@ -7,6 +7,8 @@ pub struct Model {
     pub id: i32,
 
     pub name: String,
+
+    #[sea_orm(unique)]
     pub email: String,
     
     pub password: String,
