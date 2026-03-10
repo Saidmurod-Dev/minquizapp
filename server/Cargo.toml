@@ -1,0 +1,17 @@
+[package]
+name = "rustaxum"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+dotenv = "0.15.0"
+axum = {version = "0.7", features = ["multipart"]}
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+dotenvy = "0.15"
+sea-orm = { version = "0.12", features = ["sqlx-sqlite", "runtime-tokio-native-tls", "macros"] }
+jsonwebtoken = "9"
+chrono = "0.4"
+argon2 = "0.5"
+rand = "0.8"
+password-hash = "0.5"
