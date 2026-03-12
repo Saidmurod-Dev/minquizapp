@@ -5,7 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
+import { UserCircle } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { api } from '@/lib/api';
+import { toast } from "sonner"
 
 export default function Login() {
     const router = useRouter();
@@ -16,28 +19,36 @@ export default function Login() {
     const [registerPassword, setRegisterPassword] = useState('');
     const [registerFullName, setRegisterFullName] = useState('');
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         const login = async (email: string, password: string) => {
-
+            const res = await api.post("/auth/login", { email, password })
+            const data_res = res.data as any;
+            if (!data_res.token) return false;
+            localStorage.setItem("token", data_res.token)
+            return true
         }
         e.preventDefault();
-        if (login(loginEmail, loginPassword)) {
+        if (await login(loginEmail, loginPassword)) {
             toast.success('Welcome back!');
-            navigate('/');
+            router.push('/');
         } else {
             toast.error('Invalid email or password');
         }
     };
 
-    const handleRegister = (e: React.FormEvent) => {
+    const handleRegister = async (e: React.FormEvent) => {
+        const register = async (email: string, password: string, name: string) => {
+            await api.post("/auth/register", { email, password, name })
+            return true
+        }
         e.preventDefault();
         if (!registerFullName || !registerEmail || !registerPassword) {
             toast.error('Please fill in all fields');
             return;
         }
-        if (register(registerEmail, registerPassword, registerFullName)) {
+        if (await register(registerEmail, registerPassword, registerFullName)) {
             toast.success('Account created successfully!');
-            navigate('/');
+            router.push('/');
         } else {
             toast.error('Email already exists');
         }

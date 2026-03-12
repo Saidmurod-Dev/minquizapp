@@ -2,10 +2,10 @@ use jsonwebtoken::{encode, Header, EncodingKey, decode, DecodingKey, Validation}
 use chrono::{Utc, Duration};
 use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Claims {
-    sub: String,
-    exp: usize,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Claims {
+    pub sub: String,
+    pub exp: usize,
 }
 
 pub fn create_jwt(user_id: String, secret: &str) -> String {
@@ -28,7 +28,7 @@ pub fn create_jwt(user_id: String, secret: &str) -> String {
     .unwrap()
 }
 
-pub fn verify_jwt(token: &str, secret: &str) {
+pub fn verify_jwt(token: &str, secret: &str) -> Option<Claims> {
 
     let decoded = decode::<Claims>(
         token,
@@ -37,4 +37,5 @@ pub fn verify_jwt(token: &str, secret: &str) {
     ).unwrap();
 
     println!("User id: {}", decoded.claims.sub);
+    Some(decoded.claims)
 }

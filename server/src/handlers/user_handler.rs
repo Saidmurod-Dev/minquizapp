@@ -1,14 +1,14 @@
+use crate::auth::auth_middleware::AuthUser;
+use crate::auth::jwt;
 use crate::entity::user;
+use crate::hash;
 use crate::{
     entity::user::{Column as UserColumn, Entity as User},
     hash::hash_password,
 };
-use crate::auth::jwt;
-use crate::hash;
+use axum::Extension;
 use axum::{Json, extract::State, http::StatusCode};
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, DbErr, EntityTrait, QueryFilter, Set,
-};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set};
 use serde::{Deserialize, Serialize};
 use std::env;
 
@@ -69,20 +69,14 @@ pub async fn login_user(
         .one(&db)
         .await
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "DB error".to_string()))?
-        .ok_or((
-            StatusCode::UNAUTHORIZED,
-            "Email xato".to_string(),
-        ))?;
+        .ok_or((StatusCode::UNAUTHORIZED, "Email xato".to_string()))?;
     println!("Payload password: {:?}", payload.password);
     println!("Stored hash: {:?}", user.password);
     let valid = hash::verify_password(&payload.password, &user.password);
     println!("Password valid? {}", valid);
 
     if !valid {
-        return Err((
-            StatusCode::UNAUTHORIZED,
-            "password xato".to_string(),
-        ));
+        return Err((StatusCode::UNAUTHORIZED, "password xato".to_string()));
     }
 
     // 3️⃣ JWT yaratish
@@ -92,4 +86,24 @@ pub async fn login_user(
     );
 
     Ok(Json(serde_json::json!({ "token": token })))
+}
+
+pub async fn get_user_data(
+    Extension(huser): Extension<AuthUser>,
+    State(db): State<DatabaseConnection>,
+) -> Json<serde_json::Value> {
+    let fuser: Option<user::Model> = User::find_by_id(huser.user_id.parse::<i32>().unwrap())
+        .one(&db)
+        .await
+        .unwrap();
+    if let Some(guser) = fuser {
+        Json(serde_json::json!({
+            "name": guser.name,
+            "email": guser.email
+        }))
+    } else {
+        Json(serde_json::json!({
+            "error": "User not found"
+        }))
+    }
 }
